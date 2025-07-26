@@ -63,6 +63,7 @@ export const GameCell: React.FC<GameCellProps> = ({
         <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 lg:top-1.5 lg:right-1.5 text-xs sm:text-sm lg:text-sm bg-white text-gray-800 rounded-full w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 flex items-center justify-center font-bold shadow-md">
           {moveNumber}
         </span>
+        </span>
       )}
     </div>
   );
