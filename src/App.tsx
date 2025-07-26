@@ -22,7 +22,7 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-500 p-4 flex flex-col items-center justify-center">
       <div className="mb-4 sm:mb-6 text-center">
         <h1 className="text-3xl sm:text-4xl font-bold text-white mb-1 sm:mb-2 drop-shadow-lg">
-          Tic Tac Swap! 🎮
+          Tic Tac Tiebreaker! 🎮
         </h1>
         <p className="text-sm sm:text-lg text-white/90 max-w-2xl mx-auto leading-snug px-2">
           Get 3 in a row to win! After placing 3 pieces, you must move your oldest piece each turn.
