@@ -71,32 +71,6 @@ export const useGameLogic = () => {
     }));
   }, []);
 
-  // AI move effect
-  useEffect(() => {
-    if (gameState.gameMode === 'singleplayer' && 
-        gameState.currentPlayer !== gameState.humanPlayer && 
-        !gameState.winner) {
-      
-      const timer = setTimeout(() => {
-        const aiPlayer = gameState.currentPlayer;
-        const nextPieceToMove = gameState.nextPieceToMove[aiPlayer];
-        
-        const aiMoveIndex = getAIMove(
-          gameState.board,
-          gameState.gamePhase,
-          gameState.moves,
-          aiPlayer,
-          gameState.humanPlayer,
-          nextPieceToMove
-        );
-        
-        handleCellClick(aiMoveIndex);
-      }, 800); // Small delay to make AI moves visible
-      
-      return () => clearTimeout(timer);
-    }
-  }, [gameState.currentPlayer, gameState.gameMode, gameState.humanPlayer, gameState.winner, gameState.board, gameState.gamePhase, gameState.moves, gameState.nextPieceToMove, handleCellClick]);
-
   const handleCellClick = useCallback((index: number) => {
     if (gameState.winner) return;
     
@@ -186,7 +160,34 @@ export const useGameLogic = () => {
       }
       return newState;
     });
-  }, [gameState.winner, selectedPiece]);
+  }, [gameState.winner, gameState.gameMode, gameState.currentPlayer, gameState.humanPlayer]);
+
+  // AI move effect
+  useEffect(() => {
+    if (gameState.gameMode === 'singleplayer' && 
+        gameState.currentPlayer !== gameState.humanPlayer && 
+        !gameState.winner) {
+      
+      const timer = setTimeout(() => {
+        const aiPlayer = gameState.currentPlayer;
+        const nextPieceToMove = gameState.nextPieceToMove[aiPlayer];
+        
+        const aiMoveIndex = getAIMove(
+          gameState.board,
+          gameState.gamePhase,
+          gameState.moves,
+          aiPlayer,
+          gameState.humanPlayer,
+          nextPieceToMove
+        );
+        
+        handleCellClick(aiMoveIndex);
+      }, 800); // Small delay to make AI moves visible
+      
+      return () => clearTimeout(timer);
+    }
+  }, [gameState.currentPlayer, gameState.gameMode, gameState.humanPlayer, gameState.winner, gameState.board, gameState.gamePhase, gameState.moves, gameState.nextPieceToMove, handleCellClick]);
+
 
   return {
     gameState,
