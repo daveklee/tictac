@@ -11,6 +11,8 @@ export interface Move {
 export interface GameState {
   board: GameBoard;
   currentPlayer: Player;
+  gameMode: 'multiplayer' | 'singleplayer';
+  humanPlayer: Player;
   gamePhase: 'placement' | 'movement';
   moves: Move[];
   winner: Player | null;

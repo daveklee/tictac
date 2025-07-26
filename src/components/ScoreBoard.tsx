@@ -5,6 +5,8 @@ interface ScoreBoardProps {
   scores: { X: number; O: number };
   onReset: () => void;
   currentPlayer: Player;
+  gameMode: 'multiplayer' | 'singleplayer';
+  humanPlayer: Player;
   gamePhase: 'placement' | 'movement';
   nextMoveNumber: number;
 }
@@ -13,9 +15,18 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({
   scores,
   onReset,
   currentPlayer,
+  gameMode,
+  humanPlayer,
   gamePhase,
   nextMoveNumber
 }) => {
+  const getPlayerLabel = (player: Player) => {
+    if (gameMode === 'singleplayer') {
+      return player === humanPlayer ? 'You' : 'AI';
+    }
+    return `Player ${player}`;
+  };
+
   return (
     <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-xl border-4 border-gray-200 w-full max-w-sm">
       <div className="flex justify-between items-center mb-4">
@@ -32,14 +43,16 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({
         <div className={`flex-1 p-3 sm:p-4 rounded-xl text-center transition-all duration-300 ${
           currentPlayer === 'X' ? 'bg-gradient-to-br from-pink-400 to-purple-500 text-white scale-105 shadow-lg' : 'bg-gray-100 text-gray-700'
         }`}>
-          <div className="text-2xl sm:text-3xl font-bold">X</div>
+          <div className="text-lg sm:text-xl font-bold">{getPlayerLabel('X')}</div>
+          <div className="text-xl sm:text-2xl font-bold">X</div>
           <div className="text-xl sm:text-2xl font-bold">{scores.X}</div>
         </div>
         
         <div className={`flex-1 p-3 sm:p-4 rounded-xl text-center transition-all duration-300 ${
           currentPlayer === 'O' ? 'bg-gradient-to-br from-blue-400 to-cyan-500 text-white scale-105 shadow-lg' : 'bg-gray-100 text-gray-700'
         }`}>
-          <div className="text-2xl sm:text-3xl font-bold">O</div>
+          <div className="text-lg sm:text-xl font-bold">{getPlayerLabel('O')}</div>
+          <div className="text-xl sm:text-2xl font-bold">O</div>
           <div className="text-xl sm:text-2xl font-bold">{scores.O}</div>
         </div>
       </div>
@@ -48,7 +61,10 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({
         <div className={`text-base sm:text-lg font-semibold mb-1 sm:mb-2 ${
           currentPlayer === 'X' ? 'text-purple-600' : 'text-cyan-600'
         }`}>
-          {currentPlayer}'s Turn
+          {gameMode === 'singleplayer' 
+            ? (currentPlayer === humanPlayer ? 'Your Turn' : 'AI Thinking...')
+            : `${currentPlayer}'s Turn`
+          }
         </div>
         
         {gamePhase === 'placement' ? (
@@ -57,7 +73,10 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({
           </div>
         ) : (
           <div className="text-xs sm:text-sm text-gray-600">
-            Move your <span className="font-bold">#{nextMoveNumber}</span> piece
+            {gameMode === 'singleplayer' && currentPlayer !== humanPlayer
+              ? 'AI is moving...'
+              : `Move your #${nextMoveNumber} piece`
+            }
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { GameState, Player, Move, CellValue } from '../types';
+import { getAIMove } from '../utils/aiPlayer';
 
 const initialBoard: CellValue[] = Array(9).fill(null);
 
@@ -24,6 +25,8 @@ export const useGameLogic = () => {
   const [gameState, setGameState] = useState<GameState>(() => ({
     board: [...initialBoard],
     currentPlayer: getRandomFirstPlayer(),
+    gameMode: 'multiplayer',
+    humanPlayer: 'X',
     gamePhase: 'placement',
     moves: [],
     winner: null,
@@ -33,11 +36,26 @@ export const useGameLogic = () => {
 
   const [selectedPiece, setSelectedPiece] = useState<number | null>(null);
 
+  const setGameMode = useCallback((mode: 'multiplayer' | 'singleplayer', humanPlayer: Player = 'X') => {
+    setGameState(prev => ({
+      ...prev,
+      gameMode: mode,
+      humanPlayer: humanPlayer,
+      board: [...initialBoard],
+      currentPlayer: mode === 'singleplayer' && humanPlayer === 'O' ? 'X' : getRandomFirstPlayer(),
+      gamePhase: 'placement',
+      moves: [],
+      winner: null,
+      nextPieceToMove: { X: 1, O: 1 }
+    }));
+    setSelectedPiece(null);
+  }, []);
+
   const resetGame = useCallback(() => {
     setGameState(prev => ({
       ...prev,
       board: [...initialBoard],
-      currentPlayer: getRandomFirstPlayer(),
+      currentPlayer: prev.gameMode === 'singleplayer' && prev.humanPlayer === 'O' ? 'X' : getRandomFirstPlayer(),
       gamePhase: 'placement',
       moves: [],
       winner: null,
@@ -53,8 +71,39 @@ export const useGameLogic = () => {
     }));
   }, []);
 
+  // AI move effect
+  useEffect(() => {
+    if (gameState.gameMode === 'singleplayer' && 
+        gameState.currentPlayer !== gameState.humanPlayer && 
+        !gameState.winner) {
+      
+      const timer = setTimeout(() => {
+        const aiPlayer = gameState.currentPlayer;
+        const nextPieceToMove = gameState.nextPieceToMove[aiPlayer];
+        
+        const aiMoveIndex = getAIMove(
+          gameState.board,
+          gameState.gamePhase,
+          gameState.moves,
+          aiPlayer,
+          gameState.humanPlayer,
+          nextPieceToMove
+        );
+        
+        handleCellClick(aiMoveIndex);
+      }, 800); // Small delay to make AI moves visible
+      
+      return () => clearTimeout(timer);
+    }
+  }, [gameState.currentPlayer, gameState.gameMode, gameState.humanPlayer, gameState.winner, gameState.board, gameState.gamePhase, gameState.moves, gameState.nextPieceToMove, handleCellClick]);
+
   const handleCellClick = useCallback((index: number) => {
     if (gameState.winner) return;
+    
+    // In single player mode, only allow human player to make moves via clicks
+    if (gameState.gameMode === 'singleplayer' && gameState.currentPlayer !== gameState.humanPlayer) {
+      return;
+    }
 
     setGameState(prev => {
       const newState = { ...prev };
@@ -142,6 +191,7 @@ export const useGameLogic = () => {
   return {
     gameState,
     selectedPiece,
+    setGameMode,
     handleCellClick,
     resetGame,
     resetScores
