@@ -43,8 +43,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const pieceToMovePosition = getNextMoveToMove();
 
   return (
-    <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border-4 border-gray-300">
-      <div className="grid grid-cols-3 gap-1 sm:gap-1.5 lg:gap-2 bg-gray-800 p-1 sm:p-1.5 lg:p-2 rounded-xl">
+    <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border-4 border-gray-300 w-fit mx-auto">
+      <div className="grid grid-cols-3 gap-1 sm:gap-1.5 lg:gap-2 bg-gray-800 p-2 sm:p-2 lg:p-3 rounded-xl w-fit">
         {board.map((cell, index) => (
           <GameCell
             key={index}
