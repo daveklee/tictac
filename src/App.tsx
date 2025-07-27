@@ -48,11 +48,6 @@ function App() {
             selectedPiece={selectedPiece}
             nextPieceToMove={gameState.nextPieceToMove}
           />
-          
-          <GridSizeSelector
-            gridSize={gameState.gridSize}
-            onGridSizeChange={setGridSize}
-          />
         </div>
         
         <ScoreBoard
@@ -66,13 +61,18 @@ function App() {
         />
       </div>
 
-      <div className="mt-4 sm:mt-6">
+      <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row items-center gap-4">
         <button
           onClick={resetGame}
           className="px-6 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-green-400 to-emerald-500 text-white text-lg sm:text-xl font-bold rounded-xl hover:scale-105 transition-transform duration-200 shadow-lg"
         >
           New Game 🎲
         </button>
+        
+        <GridSizeSelector
+          gridSize={gameState.gridSize}
+          onGridSizeChange={setGridSize}
+        />
       </div>
 
       {gameState.winner && (
