@@ -3,20 +3,65 @@ import { GameState, Player, Move, CellValue } from '../types';
 import { getAIMove } from '../utils/aiPlayer';
 import { trackGameStart, trackGameEnd, trackModeChange, trackScoreReset } from '../utils/analytics';
 
-const initialBoard: CellValue[] = Array(9).fill(null);
+const createInitialBoard = (gridSize: number): CellValue[] => Array(gridSize * gridSize).fill(null);
 
-const checkWinner = (board: CellValue[]): Player | null => {
-  const lines = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-    [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-    [0, 4, 8], [2, 4, 6] // diagonals
-  ];
-
-  for (const [a, b, c] of lines) {
-    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-      return board[a] as Player;
+const checkWinner = (board: CellValue[], gridSize: number): Player | null => {
+  // Check rows
+  for (let row = 0; row < gridSize; row++) {
+    const firstCell = board[row * gridSize];
+    if (firstCell) {
+      let isWinningRow = true;
+      for (let col = 1; col < gridSize; col++) {
+        if (board[row * gridSize + col] !== firstCell) {
+          isWinningRow = false;
+          break;
+        }
+      }
+      if (isWinningRow) return firstCell as Player;
     }
   }
+
+  // Check columns
+  for (let col = 0; col < gridSize; col++) {
+    const firstCell = board[col];
+    if (firstCell) {
+      let isWinningCol = true;
+      for (let row = 1; row < gridSize; row++) {
+        if (board[row * gridSize + col] !== firstCell) {
+          isWinningCol = false;
+          break;
+        }
+      }
+      if (isWinningCol) return firstCell as Player;
+    }
+  }
+
+  // Check main diagonal (top-left to bottom-right)
+  const firstDiagCell = board[0];
+  if (firstDiagCell) {
+    let isWinningDiag = true;
+    for (let i = 1; i < gridSize; i++) {
+      if (board[i * gridSize + i] !== firstDiagCell) {
+        isWinningDiag = false;
+        break;
+      }
+    }
+    if (isWinningDiag) return firstDiagCell as Player;
+  }
+
+  // Check anti-diagonal (top-right to bottom-left)
+  const firstAntiDiagCell = board[gridSize - 1];
+  if (firstAntiDiagCell) {
+    let isWinningAntiDiag = true;
+    for (let i = 1; i < gridSize; i++) {
+      if (board[i * gridSize + (gridSize - 1 - i)] !== firstAntiDiagCell) {
+        isWinningAntiDiag = false;
+        break;
+      }
+    }
+    if (isWinningAntiDiag) return firstAntiDiagCell as Player;
+  }
+
   return null;
 };
 
@@ -24,7 +69,8 @@ const getRandomFirstPlayer = (): Player => Math.random() < 0.5 ? 'X' : 'O';
 
 export const useGameLogic = () => {
   const [gameState, setGameState] = useState<GameState>(() => ({
-    board: [...initialBoard],
+    board: createInitialBoard(3),
+    gridSize: 3,
     currentPlayer: getRandomFirstPlayer(),
     gameMode: 'multiplayer',
     humanPlayer: 'X',
@@ -37,13 +83,27 @@ export const useGameLogic = () => {
 
   const [selectedPiece, setSelectedPiece] = useState<number | null>(null);
 
+  const setGridSize = useCallback((size: number) => {
+    setGameState(prev => ({
+      ...prev,
+      gridSize: size,
+      board: createInitialBoard(size),
+      currentPlayer: getRandomFirstPlayer(),
+      gamePhase: 'placement',
+      moves: [],
+      winner: null,
+      nextPieceToMove: { X: 1, O: 1 }
+    }));
+    setSelectedPiece(null);
+  }, []);
+
   const setGameMode = useCallback((mode: 'multiplayer' | 'singleplayer', humanPlayer: Player = 'X') => {
     trackModeChange(mode, humanPlayer);
     setGameState(prev => ({
       ...prev,
       gameMode: mode,
       humanPlayer: humanPlayer,
-      board: [...initialBoard],
+      board: createInitialBoard(prev.gridSize),
       currentPlayer: mode === 'singleplayer' && humanPlayer === 'O' ? 'X' : getRandomFirstPlayer(),
       gamePhase: 'placement',
       moves: [],
@@ -57,7 +117,7 @@ export const useGameLogic = () => {
     trackGameStart(gameState.gameMode, gameState.humanPlayer);
     setGameState(prev => ({
       ...prev,
-      board: [...initialBoard],
+      board: createInitialBoard(prev.gridSize),
       currentPlayer: prev.gameMode === 'singleplayer' && prev.humanPlayer === 'O' ? 'X' : getRandomFirstPlayer(),
       gamePhase: 'placement',
       moves: [],
@@ -65,7 +125,7 @@ export const useGameLogic = () => {
       nextPieceToMove: { X: 1, O: 1 }
     }));
     setSelectedPiece(null);
-  }, []);
+  }, [gameState.gameMode, gameState.humanPlayer]);
 
   const resetScores = useCallback(() => {
     trackScoreReset();
@@ -104,9 +164,9 @@ export const useGameLogic = () => {
         
         // Check if we should switch to movement phase
         const currentPlayerMoves = newState.moves.filter(m => m.player === prev.currentPlayer).length;
-        if (currentPlayerMoves === 3) {
+        if (currentPlayerMoves === prev.gridSize) {
           const otherPlayerMoves = newState.moves.filter(m => m.player !== prev.currentPlayer).length;
-          if (otherPlayerMoves === 3) {
+          if (otherPlayerMoves === prev.gridSize) {
             newState.gamePhase = 'movement';
           }
         }
@@ -149,12 +209,12 @@ export const useGameLogic = () => {
         // Update next piece to move for this player (cycle 1->2->3->1)
         newState.nextPieceToMove = {
           ...prev.nextPieceToMove,
-          [prev.currentPlayer]: (prev.nextPieceToMove[prev.currentPlayer] % 3) + 1
+          [prev.currentPlayer]: (prev.nextPieceToMove[prev.currentPlayer] % prev.gridSize) + 1
         };
       }
       
       // Check for winner
-      const winner = checkWinner(newState.board);
+      const winner = checkWinner(newState.board, prev.gridSize);
       if (winner) {
         trackGameEnd(winner, prev.gameMode);
         newState.winner = winner;
@@ -183,7 +243,8 @@ export const useGameLogic = () => {
           gameState.moves,
           aiPlayer,
           gameState.humanPlayer,
-          nextPieceToMove
+          nextPieceToMove,
+          gameState.gridSize
         );
         
         // Make AI move directly without using handleCellClick
@@ -210,9 +271,9 @@ export const useGameLogic = () => {
             
             // Check if we should switch to movement phase
             const currentPlayerMoves = newState.moves.filter(m => m.player === prev.currentPlayer).length;
-            if (currentPlayerMoves === 3) {
+            if (currentPlayerMoves === prev.gridSize) {
               const otherPlayerMoves = newState.moves.filter(m => m.player !== prev.currentPlayer).length;
-              if (otherPlayerMoves === 3) {
+              if (otherPlayerMoves === prev.gridSize) {
                 newState.gamePhase = 'movement';
               }
             }
@@ -255,12 +316,12 @@ export const useGameLogic = () => {
             // Update next piece to move for this player (cycle 1->2->3->1)
             newState.nextPieceToMove = {
               ...prev.nextPieceToMove,
-              [prev.currentPlayer]: (prev.nextPieceToMove[prev.currentPlayer] % 3) + 1
+              [prev.currentPlayer]: (prev.nextPieceToMove[prev.currentPlayer] % prev.gridSize) + 1
             };
           }
           
           // Check for winner
-          const winner = checkWinner(newState.board);
+          const winner = checkWinner(newState.board, prev.gridSize);
           if (winner) {
             trackGameEnd(winner, prev.gameMode);
             newState.winner = winner;
@@ -281,6 +342,7 @@ export const useGameLogic = () => {
   return {
     gameState,
     selectedPiece,
+    setGridSize,
     setGameMode,
     handleCellClick,
     resetGame,

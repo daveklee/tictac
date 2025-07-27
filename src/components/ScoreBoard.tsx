@@ -69,7 +69,7 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({
         
         {gamePhase === 'placement' ? (
           <div className="text-xs sm:text-sm text-gray-600">
-            Place your piece anywhere
+            Place piece anywhere
           </div>
         ) : (
           <div className="text-xs sm:text-sm text-gray-600">

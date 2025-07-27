@@ -9,6 +9,7 @@ interface GameCellProps {
   disabled: boolean;
   cellIndex: number;
   moveNumber?: number;
+  gridSize: number;
 }
 
 export const GameCell: React.FC<GameCellProps> = ({
@@ -18,10 +19,31 @@ export const GameCell: React.FC<GameCellProps> = ({
   isNextToMove,
   disabled,
   cellIndex,
-  moveNumber
+  moveNumber,
+  gridSize
 }) => {
+  const getCellSize = () => {
+    if (gridSize <= 3) return "w-20 sm:w-24 lg:w-24";
+    if (gridSize <= 5) return "w-16 sm:w-20 lg:w-20";
+    if (gridSize <= 7) return "w-12 sm:w-16 lg:w-16";
+    return "w-10 sm:w-12 lg:w-12";
+  };
+
+  const getTextSize = () => {
+    if (gridSize <= 3) return "text-3xl sm:text-4xl lg:text-4xl";
+    if (gridSize <= 5) return "text-2xl sm:text-3xl lg:text-3xl";
+    if (gridSize <= 7) return "text-xl sm:text-2xl lg:text-2xl";
+    return "text-lg sm:text-xl lg:text-xl";
+  };
+
+  const getMoveNumberSize = () => {
+    if (gridSize <= 5) return "w-5 h-5 text-xs";
+    if (gridSize <= 7) return "w-4 h-4 text-xs";
+    return "w-3 h-3 text-xs";
+  };
+
   const getCellClass = () => {
-    let baseClass = "aspect-square w-20 sm:w-24 lg:w-24 border-4 border-gray-800 flex items-center justify-center text-3xl sm:text-4xl lg:text-4xl font-bold cursor-pointer transition-all duration-300 transform relative ";
+    let baseClass = `aspect-square ${getCellSize()} border-4 border-gray-800 flex items-center justify-center ${getTextSize()} font-bold cursor-pointer transition-all duration-300 transform relative `;
     
     if (disabled && !value) {
       baseClass += "cursor-not-allowed opacity-50 ";
@@ -59,7 +81,7 @@ export const GameCell: React.FC<GameCellProps> = ({
         </span>
       )}
       {moveNumber && (
-        <span className="absolute top-1 right-1 text-xs bg-white text-gray-800 rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-md">
+        <span className={`absolute top-1 right-1 bg-white text-gray-800 rounded-full ${getMoveNumberSize()} flex items-center justify-center font-bold shadow-md`}>
           {moveNumber}
         </span>
       )}

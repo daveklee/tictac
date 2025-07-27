@@ -1,22 +1,67 @@
 import { GameBoard, Player, Move, CellValue } from '../types';
 
-const checkWinner = (board: CellValue[]): Player | null => {
-  const lines = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-    [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-    [0, 4, 8], [2, 4, 6] // diagonals
-  ];
-
-  for (const [a, b, c] of lines) {
-    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-      return board[a] as Player;
+const checkWinner = (board: CellValue[], gridSize: number): Player | null => {
+  // Check rows
+  for (let row = 0; row < gridSize; row++) {
+    const firstCell = board[row * gridSize];
+    if (firstCell) {
+      let isWinningRow = true;
+      for (let col = 1; col < gridSize; col++) {
+        if (board[row * gridSize + col] !== firstCell) {
+          isWinningRow = false;
+          break;
+        }
+      }
+      if (isWinningRow) return firstCell as Player;
     }
   }
+
+  // Check columns
+  for (let col = 0; col < gridSize; col++) {
+    const firstCell = board[col];
+    if (firstCell) {
+      let isWinningCol = true;
+      for (let row = 1; row < gridSize; row++) {
+        if (board[row * gridSize + col] !== firstCell) {
+          isWinningCol = false;
+          break;
+        }
+      }
+      if (isWinningCol) return firstCell as Player;
+    }
+  }
+
+  // Check main diagonal (top-left to bottom-right)
+  const firstDiagCell = board[0];
+  if (firstDiagCell) {
+    let isWinningDiag = true;
+    for (let i = 1; i < gridSize; i++) {
+      if (board[i * gridSize + i] !== firstDiagCell) {
+        isWinningDiag = false;
+        break;
+      }
+    }
+    if (isWinningDiag) return firstDiagCell as Player;
+  }
+
+  // Check anti-diagonal (top-right to bottom-left)
+  const firstAntiDiagCell = board[gridSize - 1];
+  if (firstAntiDiagCell) {
+    let isWinningAntiDiag = true;
+    for (let i = 1; i < gridSize; i++) {
+      if (board[i * gridSize + (gridSize - 1 - i)] !== firstAntiDiagCell) {
+        isWinningAntiDiag = false;
+        break;
+      }
+    }
+    if (isWinningAntiDiag) return firstAntiDiagCell as Player;
+  }
+
   return null;
 };
 
-const evaluateBoard = (board: CellValue[], aiPlayer: Player): number => {
-  const winner = checkWinner(board);
+const evaluateBoard = (board: CellValue[], aiPlayer: Player, gridSize: number): number => {
+  const winner = checkWinner(board, gridSize);
   if (winner === aiPlayer) return 10;
   if (winner && winner !== aiPlayer) return -10;
   return 0;
@@ -26,8 +71,8 @@ const getAvailableMoves = (board: CellValue[]): number[] => {
   return board.map((cell, index) => cell === null ? index : -1).filter(index => index !== -1);
 };
 
-const minimax = (board: CellValue[], depth: number, isMaximizing: boolean, aiPlayer: Player, humanPlayer: Player): number => {
-  const score = evaluateBoard(board, aiPlayer);
+const minimax = (board: CellValue[], depth: number, isMaximizing: boolean, aiPlayer: Player, humanPlayer: Player, gridSize: number): number => {
+  const score = evaluateBoard(board, aiPlayer, gridSize);
   
   if (score === 10) return score - depth;
   if (score === -10) return score + depth;
@@ -35,14 +80,14 @@ const minimax = (board: CellValue[], depth: number, isMaximizing: boolean, aiPla
   const availableMoves = getAvailableMoves(board);
   if (availableMoves.length === 0) return 0;
   
-  if (depth > 4) return 0; // Limit depth for performance
+  if (depth > Math.min(4, gridSize)) return 0; // Limit depth for performance, scale with grid size
   
   if (isMaximizing) {
     let best = -1000;
     for (const move of availableMoves) {
       const newBoard = [...board];
       newBoard[move] = aiPlayer;
-      const value = minimax(newBoard, depth + 1, false, aiPlayer, humanPlayer);
+      const value = minimax(newBoard, depth + 1, false, aiPlayer, humanPlayer, gridSize);
       best = Math.max(best, value);
     }
     return best;
@@ -51,7 +96,7 @@ const minimax = (board: CellValue[], depth: number, isMaximizing: boolean, aiPla
     for (const move of availableMoves) {
       const newBoard = [...board];
       newBoard[move] = humanPlayer;
-      const value = minimax(newBoard, depth + 1, true, aiPlayer, humanPlayer);
+      const value = minimax(newBoard, depth + 1, true, aiPlayer, humanPlayer, gridSize);
       best = Math.min(best, value);
     }
     return best;
@@ -64,7 +109,8 @@ export const getAIMove = (
   moves: Move[],
   aiPlayer: Player,
   humanPlayer: Player,
-  nextPieceToMove: number
+  nextPieceToMove: number,
+  gridSize: number
 ): number => {
   if (gamePhase === 'placement') {
     // Placement phase - use minimax to find best empty cell
@@ -74,7 +120,7 @@ export const getAIMove = (
     for (const move of availableMoves) {
       const testBoard = [...board];
       testBoard[move] = aiPlayer;
-      if (checkWinner(testBoard) === aiPlayer) {
+      if (checkWinner(testBoard, gridSize) === aiPlayer) {
         return move;
       }
     }
@@ -83,7 +129,7 @@ export const getAIMove = (
     for (const move of availableMoves) {
       const testBoard = [...board];
       testBoard[move] = humanPlayer;
-      if (checkWinner(testBoard) === humanPlayer) {
+      if (checkWinner(testBoard, gridSize) === humanPlayer) {
         return move;
       }
     }
@@ -95,7 +141,7 @@ export const getAIMove = (
     for (const move of availableMoves) {
       const testBoard = [...board];
       testBoard[move] = aiPlayer;
-      const moveValue = minimax(testBoard, 0, false, aiPlayer, humanPlayer);
+      const moveValue = minimax(testBoard, 0, false, aiPlayer, humanPlayer, gridSize);
       
       if (moveValue > bestValue) {
         bestValue = moveValue;
@@ -119,7 +165,7 @@ export const getAIMove = (
       const testBoard = [...board];
       testBoard[pieceToMove] = null;
       testBoard[move] = aiPlayer;
-      if (checkWinner(testBoard) === aiPlayer) {
+      if (checkWinner(testBoard, gridSize) === aiPlayer) {
         return move;
       }
     }
@@ -137,7 +183,7 @@ export const getAIMove = (
       for (const opponentMove of opponentMoves) {
         const opponentBoard = [...testBoard];
         opponentBoard[opponentMove] = humanPlayer;
-        if (checkWinner(opponentBoard) === humanPlayer) {
+        if (checkWinner(opponentBoard, gridSize) === humanPlayer) {
           wouldLose = true;
           break;
         }
@@ -156,7 +202,7 @@ export const getAIMove = (
       const testBoard = [...board];
       testBoard[pieceToMove] = null;
       testBoard[move] = aiPlayer;
-      const moveValue = minimax(testBoard, 0, false, aiPlayer, humanPlayer);
+      const moveValue = minimax(testBoard, 0, false, aiPlayer, humanPlayer, gridSize);
       
       if (moveValue > bestValue) {
         bestValue = moveValue;

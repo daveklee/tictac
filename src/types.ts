@@ -10,6 +10,7 @@ export interface Move {
 
 export interface GameState {
   board: GameBoard;
+  gridSize: number;
   currentPlayer: Player;
   gameMode: 'multiplayer' | 'singleplayer';
   humanPlayer: Player;

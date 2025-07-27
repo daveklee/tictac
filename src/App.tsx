@@ -1,12 +1,13 @@
 import React from 'react';
 import { GameBoard } from './components/GameBoard';
 import { GameModeSelector } from './components/GameModeSelector';
+import { GridSizeSelector } from './components/GridSizeSelector';
 import { ScoreBoard } from './components/ScoreBoard';
 import { WinAnimation } from './components/WinAnimation';
 import { useGameLogic } from './hooks/useGameLogic';
 
 function App() {
-  const { gameState, selectedPiece, setGameMode, handleCellClick, resetGame, resetScores } = useGameLogic();
+  const { gameState, selectedPiece, setGridSize, setGameMode, handleCellClick, resetGame, resetScores } = useGameLogic();
 
   const getNextMoveNumber = () => {
     if (gameState.gamePhase === 'placement') {
@@ -31,6 +32,11 @@ function App() {
 
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-center lg:items-start">
         <div className="flex flex-col items-center">
+          <GridSizeSelector
+            gridSize={gameState.gridSize}
+            onGridSizeChange={setGridSize}
+          />
+          
           <GameModeSelector
             gameMode={gameState.gameMode}
             humanPlayer={gameState.humanPlayer}
@@ -39,6 +45,7 @@ function App() {
           
           <GameBoard
             board={gameState.board}
+            gridSize={gameState.gridSize}
             onCellClick={handleCellClick}
             currentPlayer={gameState.currentPlayer}
             gamePhase={gameState.gamePhase}
