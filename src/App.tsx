@@ -26,7 +26,7 @@ function App() {
           Tic Tac Tiebreaker! 🎮
         </h1>
         <p className="text-sm sm:text-lg text-white/90 max-w-2xl mx-auto leading-snug px-2">
-          Get 3 in a row to win! After placing 3 pieces, you must move your oldest piece each turn.
+          Get {gameState.gridSize} in a row to win! After placing {gameState.gridSize + 1} pieces, you must move your oldest piece each turn.
         </p>
       </div>
 
