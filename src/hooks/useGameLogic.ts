@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { GameState, Player, Move, CellValue } from '../types';
 import { getAIMove } from '../utils/aiPlayer';
+import { trackGameStart, trackGameEnd, trackModeChange, trackScoreReset } from '../utils/analytics';
 
 const initialBoard: CellValue[] = Array(9).fill(null);
 
@@ -37,6 +38,7 @@ export const useGameLogic = () => {
   const [selectedPiece, setSelectedPiece] = useState<number | null>(null);
 
   const setGameMode = useCallback((mode: 'multiplayer' | 'singleplayer', humanPlayer: Player = 'X') => {
+    trackModeChange(mode, humanPlayer);
     setGameState(prev => ({
       ...prev,
       gameMode: mode,
@@ -52,6 +54,7 @@ export const useGameLogic = () => {
   }, []);
 
   const resetGame = useCallback(() => {
+    trackGameStart(gameState.gameMode, gameState.humanPlayer);
     setGameState(prev => ({
       ...prev,
       board: [...initialBoard],
@@ -65,6 +68,7 @@ export const useGameLogic = () => {
   }, []);
 
   const resetScores = useCallback(() => {
+    trackScoreReset();
     setGameState(prev => ({
       ...prev,
       scores: { X: 0, O: 0 }
@@ -152,6 +156,7 @@ export const useGameLogic = () => {
       // Check for winner
       const winner = checkWinner(newState.board);
       if (winner) {
+        trackGameEnd(winner, prev.gameMode);
         newState.winner = winner;
         newState.scores = {
           ...prev.scores,
@@ -257,6 +262,7 @@ export const useGameLogic = () => {
           // Check for winner
           const winner = checkWinner(newState.board);
           if (winner) {
+            trackGameEnd(winner, prev.gameMode);
             newState.winner = winner;
             newState.scores = {
               ...prev.scores,
