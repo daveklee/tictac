@@ -322,12 +322,11 @@ export const useGameLogic = () => {
             
               newState.board = newBoard;
               newState.currentPlayer = prev.currentPlayer === 'X' ? 'O' : 'X';
-              const piecesPerPlayer = Math.floor((prev.gridSize * prev.gridSize * 2) / 3 / 2);
             
               // Update next piece to move for this player (cycle through pieces)
               newState.nextPieceToMove = {
                 ...prev.nextPieceToMove,
-                [prev.currentPlayer]: (prev.nextPieceToMove[prev.currentPlayer] % piecesPerPlayer) + 1
+                [prev.currentPlayer]: (prev.nextPieceToMove[prev.currentPlayer] % prev.piecesPerPlayer) + 1
               };
             }
           
