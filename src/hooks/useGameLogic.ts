@@ -68,6 +68,7 @@ const checkWinner = (board: CellValue[], gridSize: number): Player | null => {
 const getRandomFirstPlayer = (): Player => Math.random() < 0.5 ? 'X' : 'O';
 
 export const useGameLogic = () => {
+  const initialPiecesPerPlayer = Math.floor((3 * 3 * 2) / 3 / 2); // 3 for initial 3x3 grid
   const [gameState, setGameState] = useState<GameState>(() => ({
     board: createInitialBoard(3),
     gridSize: 3,
@@ -78,12 +79,14 @@ export const useGameLogic = () => {
     moves: [],
     winner: null,
     scores: { X: 0, O: 0 },
-    nextPieceToMove: { X: 1, O: 1 }
+    nextPieceToMove: { X: 1, O: 1 },
+    piecesPerPlayer: initialPiecesPerPlayer
   }));
 
   const [selectedPiece, setSelectedPiece] = useState<number | null>(null);
 
   const setGridSize = useCallback((size: number) => {
+    const piecesPerPlayer = Math.floor((size * size * 2) / 3 / 2);
     setGameState(prev => ({
       ...prev,
       gridSize: size,
@@ -92,13 +95,15 @@ export const useGameLogic = () => {
       gamePhase: 'placement',
       moves: [],
       winner: null,
-      nextPieceToMove: { X: 1, O: 1 }
+      nextPieceToMove: { X: 1, O: 1 },
+      piecesPerPlayer
     }));
     setSelectedPiece(null);
   }, []);
 
   const setGameMode = useCallback((mode: 'multiplayer' | 'singleplayer', humanPlayer: Player = 'X') => {
     trackModeChange(mode, humanPlayer);
+    const piecesPerPlayer = Math.floor((gameState.gridSize * gameState.gridSize * 2) / 3 / 2);
     setGameState(prev => ({
       ...prev,
       gameMode: mode,
@@ -108,13 +113,15 @@ export const useGameLogic = () => {
       gamePhase: 'placement',
       moves: [],
       winner: null,
-      nextPieceToMove: { X: 1, O: 1 }
+      nextPieceToMove: { X: 1, O: 1 },
+      piecesPerPlayer
     }));
     setSelectedPiece(null);
-  }, []);
+  }, [gameState.gridSize]);
 
   const resetGame = useCallback(() => {
     trackGameStart(gameState.gameMode, gameState.humanPlayer);
+    const piecesPerPlayer = Math.floor((gameState.gridSize * gameState.gridSize * 2) / 3 / 2);
     setGameState(prev => ({
       ...prev,
       board: createInitialBoard(prev.gridSize),
@@ -122,7 +129,8 @@ export const useGameLogic = () => {
       gamePhase: 'placement',
       moves: [],
       winner: null,
-      nextPieceToMove: { X: 1, O: 1 }
+      nextPieceToMove: { X: 1, O: 1 },
+      piecesPerPlayer
     }));
     setSelectedPiece(null);
   }, [gameState.gameMode, gameState.humanPlayer]);
@@ -163,11 +171,10 @@ export const useGameLogic = () => {
         newState.moves = [...prev.moves, newMove];
         
         // Check if we should switch to movement phase
-        const piecesPerPlayer = prev.gridSize + 1;
         const currentPlayerMoves = newState.moves.filter(m => m.player === prev.currentPlayer).length;
-        if (currentPlayerMoves === piecesPerPlayer) {
+        if (currentPlayerMoves >= prev.piecesPerPlayer) {
           const otherPlayerMoves = newState.moves.filter(m => m.player !== prev.currentPlayer).length;
-          if (otherPlayerMoves === piecesPerPlayer) {
+          if (otherPlayerMoves >= prev.piecesPerPlayer) {
             newState.gamePhase = 'movement';
           }
         }

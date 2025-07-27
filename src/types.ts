@@ -19,4 +19,5 @@ export interface GameState {
   winner: Player | null;
   scores: { X: number; O: number };
   nextPieceToMove: { X: number; O: number };
+  piecesPerPlayer: number;
 }
