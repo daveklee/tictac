@@ -32,11 +32,6 @@ function App() {
 
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-center lg:items-start">
         <div className="flex flex-col items-center">
-          <GridSizeSelector
-            gridSize={gameState.gridSize}
-            onGridSizeChange={setGridSize}
-          />
-          
           <GameModeSelector
             gameMode={gameState.gameMode}
             humanPlayer={gameState.humanPlayer}
@@ -52,6 +47,11 @@ function App() {
             moves={gameState.moves}
             selectedPiece={selectedPiece}
             nextPieceToMove={gameState.nextPieceToMove}
+          />
+          
+          <GridSizeSelector
+            gridSize={gameState.gridSize}
+            onGridSizeChange={setGridSize}
           />
         </div>
         

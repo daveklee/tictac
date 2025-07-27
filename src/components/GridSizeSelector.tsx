@@ -10,7 +10,7 @@ export const GridSizeSelector: React.FC<GridSizeSelectorProps> = ({
   gridSize,
   onGridSizeChange
 }) => {
-  const gridSizes = [3, 4, 5, 6, 7, 8, 9, 10];
+  const gridSizes = [3, 4, 5];
 
   return (
     <div className="bg-white rounded-xl p-3 sm:p-4 shadow-lg border-2 border-gray-200 mb-3 sm:mb-4">

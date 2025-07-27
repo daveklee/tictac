@@ -234,111 +234,124 @@ export const useGameLogic = () => {
         gameState.currentPlayer !== gameState.humanPlayer && 
         !gameState.winner) {
       
-      const timer = setTimeout(() => {
+      const makeAIMove = () => {
         const aiPlayer = gameState.currentPlayer;
         const nextPieceToMove = gameState.nextPieceToMove[aiPlayer];
         
-        const aiMoveIndex = getAIMove(
-          gameState.board,
-          gameState.gamePhase,
-          gameState.moves,
-          aiPlayer,
-          gameState.humanPlayer,
-          nextPieceToMove,
-          gameState.gridSize
-        );
+        try {
+          const aiMoveIndex = getAIMove(
+            gameState.board,
+            gameState.gamePhase,
+            gameState.moves,
+            aiPlayer,
+            gameState.humanPlayer,
+            nextPieceToMove,
+            gameState.gridSize
+          );
         
-        // Make AI move directly without using handleCellClick
-        setGameState(prev => {
-          if (prev.winner) return prev;
+          // Make AI move directly without using handleCellClick
+          setGameState(prev => {
+            if (prev.winner) return prev;
           
-          const newState = { ...prev };
+            const newState = { ...prev };
           
-          if (prev.gamePhase === 'placement') {
-            // Placement phase
-            if (prev.board[aiMoveIndex] !== null) return prev;
+            if (prev.gamePhase === 'placement') {
+              // Placement phase
+              if (prev.board[aiMoveIndex] !== null) return prev;
             
-            const newBoard = [...prev.board];
-            newBoard[aiMoveIndex] = prev.currentPlayer;
+              const newBoard = [...prev.board];
+              newBoard[aiMoveIndex] = prev.currentPlayer;
             
-            const newMove: Move = {
-              player: prev.currentPlayer,
-              position: aiMoveIndex,
-              moveNumber: prev.moves.filter(m => m.player === prev.currentPlayer).length + 1
-            };
+              const newMove: Move = {
+                player: prev.currentPlayer,
+                position: aiMoveIndex,
+                moveNumber: prev.moves.filter(m => m.player === prev.currentPlayer).length + 1
+              };
             
-            newState.board = newBoard;
-            newState.moves = [...prev.moves, newMove];
+              newState.board = newBoard;
+              newState.moves = [...prev.moves, newMove];
             
-            // Check if we should switch to movement phase
-            const piecesPerPlayer = Math.floor((prev.gridSize * prev.gridSize * 2) / 3 / 2);
-            const currentPlayerMoves = newState.moves.filter(m => m.player === prev.currentPlayer).length;
-            if (currentPlayerMoves >= piecesPerPlayer) {
-              const otherPlayerMoves = newState.moves.filter(m => m.player !== prev.currentPlayer).length;
-              if (otherPlayerMoves >= piecesPerPlayer) {
-                newState.gamePhase = 'movement';
+              // Check if we should switch to movement phase
+              const piecesPerPlayer = Math.floor((prev.gridSize * prev.gridSize * 2) / 3 / 2);
+              const currentPlayerMoves = newState.moves.filter(m => m.player === prev.currentPlayer).length;
+              if (currentPlayerMoves >= piecesPerPlayer) {
+                const otherPlayerMoves = newState.moves.filter(m => m.player !== prev.currentPlayer).length;
+                if (otherPlayerMoves >= piecesPerPlayer) {
+                  newState.gamePhase = 'movement';
+                }
               }
-            }
             
-            newState.currentPlayer = prev.currentPlayer === 'X' ? 'O' : 'X';
+              newState.currentPlayer = prev.currentPlayer === 'X' ? 'O' : 'X';
             
-          } else {
-            // Movement phase
-            const pieceNumberToMove = prev.nextPieceToMove[prev.currentPlayer];
-            const pieceToMove = prev.moves.find(move => 
-              move.player === prev.currentPlayer && move.moveNumber === pieceNumberToMove
-            )?.position;
+            } else {
+              // Movement phase
+              const pieceNumberToMove = prev.nextPieceToMove[prev.currentPlayer];
+              const pieceToMove = prev.moves.find(move => 
+                move.player === prev.currentPlayer && move.moveNumber === pieceNumberToMove
+              )?.position;
             
-            if (pieceToMove === undefined) return prev;
+              if (pieceToMove === undefined) return prev;
             
-            // Can't move to occupied cell
-            if (prev.board[aiMoveIndex] !== null) return prev;
+              // Can't move to occupied cell
+              if (prev.board[aiMoveIndex] !== null) return prev;
             
-            // Move the piece to the new position
-            const newBoard = [...prev.board];
-            newBoard[pieceToMove] = null;
-            newBoard[aiMoveIndex] = prev.currentPlayer;
+              // Move the piece to the new position
+              const newBoard = [...prev.board];
+              newBoard[pieceToMove] = null;
+              newBoard[aiMoveIndex] = prev.currentPlayer;
             
-            // Remove the old move and add it to the end with new position
-            const moveToUpdate = prev.moves.find(move => 
-              move.player === prev.currentPlayer && move.position === pieceToMove
-            );
-            
-            if (moveToUpdate) {
-              const newMoves = prev.moves.filter(move => 
-                !(move.player === prev.currentPlayer && move.position === pieceToMove)
+              // Remove the old move and add it to the end with new position
+              const moveToUpdate = prev.moves.find(move => 
+                move.player === prev.currentPlayer && move.position === pieceToMove
               );
-              newMoves.push({ ...moveToUpdate, position: aiMoveIndex });
-              newState.moves = newMoves;
+            
+              if (moveToUpdate) {
+                const newMoves = prev.moves.filter(move => 
+                  !(move.player === prev.currentPlayer && move.position === pieceToMove)
+                );
+                newMoves.push({ ...moveToUpdate, position: aiMoveIndex });
+                newState.moves = newMoves;
+              }
+            
+              newState.board = newBoard;
+              newState.currentPlayer = prev.currentPlayer === 'X' ? 'O' : 'X';
+              const piecesPerPlayer = Math.floor((prev.gridSize * prev.gridSize * 2) / 3 / 2);
+            
+              // Update next piece to move for this player (cycle through pieces)
+              newState.nextPieceToMove = {
+                ...prev.nextPieceToMove,
+                [prev.currentPlayer]: (prev.nextPieceToMove[prev.currentPlayer] % piecesPerPlayer) + 1
+              };
             }
-            
-            newState.board = newBoard;
-          const piecesPerPlayer = Math.floor((prev.gridSize * prev.gridSize * 2) / 3 / 2);
-            
-            // Update next piece to move for this player (cycle 1->2->3->1)
-            newState.nextPieceToMove = {
-              ...prev.nextPieceToMove,
-              [prev.currentPlayer]: (prev.nextPieceToMove[prev.currentPlayer] % Math.floor((prev.gridSize * prev.gridSize * 2) / 3 / 2)) + 1
-            };
-          }
           
-          // Check for winner
-          const winner = checkWinner(newState.board, prev.gridSize);
-          if (winner) {
-            trackGameEnd(winner, prev.gameMode);
-            newState.winner = winner;
-            newState.scores = {
-              ...prev.scores,
-              [winner]: prev.scores[winner] + 1
-            };
+            // Check for winner
+            const winner = checkWinner(newState.board, prev.gridSize);
+            if (winner) {
+              trackGameEnd(winner, prev.gameMode);
+              newState.winner = winner;
+              newState.scores = {
+                ...prev.scores,
+                [winner]: prev.scores[winner] + 1
+              };
+            }
+            return newState;
+          });
+        } catch (error) {
+          console.error('AI move error:', error);
+          // Fallback to random move if AI fails
+          const availableMoves = gameState.board.map((cell, index) => cell === null ? index : -1).filter(index => index !== -1);
+          if (availableMoves.length > 0) {
+            const randomMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+            handleCellClick(randomMove);
           }
-          return newState;
-        });
-      }, 800); // Small delay to make AI moves visible
+        }
+      };
+
+      const timer = setTimeout(makeAIMove, 500); // Reduced delay for faster gameplay
       
       return () => clearTimeout(timer);
     }
-  }, [gameState.currentPlayer, gameState.gameMode, gameState.humanPlayer, gameState.winner, gameState.gamePhase, gameState.gridSize]);
+  }, [gameState.currentPlayer, gameState.gameMode, gameState.humanPlayer, gameState.winner, gameState.gamePhase]);
 
 
   return {

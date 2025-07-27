@@ -80,7 +80,9 @@ const minimax = (board: CellValue[], depth: number, isMaximizing: boolean, aiPla
   const availableMoves = getAvailableMoves(board);
   if (availableMoves.length === 0) return 0;
   
-  if (depth > Math.min(4, gridSize)) return 0; // Limit depth for performance, scale with grid size
+  // Limit depth based on grid size for performance
+  const maxDepth = gridSize === 3 ? 6 : gridSize === 4 ? 4 : 3;
+  if (depth >= maxDepth) return 0;
   
   if (isMaximizing) {
     let best = -1000;
@@ -112,10 +114,10 @@ export const getAIMove = (
   nextPieceToMove: number,
   gridSize: number
 ): number => {
+  const availableMoves = getAvailableMoves(board);
+  if (availableMoves.length === 0) return 0;
+
   if (gamePhase === 'placement') {
-    // Placement phase - use minimax to find best empty cell
-    const availableMoves = getAvailableMoves(board);
-    
     // Check for immediate win
     for (const move of availableMoves) {
       const testBoard = [...board];
@@ -134,7 +136,23 @@ export const getAIMove = (
       }
     }
     
-    // Use minimax for strategic placement
+    // For larger grids or many moves, use simpler heuristics
+    if (gridSize >= 5 || availableMoves.length > 10) {
+      // Simple heuristic: prefer center, then corners, then edges
+      const center = Math.floor(gridSize / 2) * gridSize + Math.floor(gridSize / 2);
+      if (availableMoves.includes(center)) return center;
+      
+      // Try corners
+      const corners = [0, gridSize - 1, gridSize * (gridSize - 1), gridSize * gridSize - 1];
+      for (const corner of corners) {
+        if (availableMoves.includes(corner)) return corner;
+      }
+      
+      // Return random available move
+      return availableMoves[Math.floor(Math.random() * availableMoves.length)];
+    }
+    
+    // Use minimax for smaller grids
     let bestMove = availableMoves[0];
     let bestValue = -1000;
     
@@ -158,8 +176,6 @@ export const getAIMove = (
     
     if (pieceToMove === undefined) return 0;
     
-    const availableMoves = getAvailableMoves(board);
-    
     // Check for immediate win by moving
     for (const move of availableMoves) {
       const testBoard = [...board];
@@ -170,31 +186,12 @@ export const getAIMove = (
       }
     }
     
-    // Check for blocking opponent win
-    for (const move of availableMoves) {
-      const testBoard = [...board];
-      testBoard[pieceToMove] = null;
-      testBoard[move] = aiPlayer;
-      
-      // Simulate opponent's best response
-      const opponentMoves = getAvailableMoves(testBoard);
-      let wouldLose = false;
-      
-      for (const opponentMove of opponentMoves) {
-        const opponentBoard = [...testBoard];
-        opponentBoard[opponentMove] = humanPlayer;
-        if (checkWinner(opponentBoard, gridSize) === humanPlayer) {
-          wouldLose = true;
-          break;
-        }
-      }
-      
-      if (!wouldLose) {
-        return move;
-      }
+    // For larger grids, use simple heuristics in movement phase
+    if (gridSize >= 5 || availableMoves.length > 15) {
+      return availableMoves[Math.floor(Math.random() * availableMoves.length)];
     }
     
-    // Use minimax for strategic movement
+    // Use minimax for smaller grids in movement phase
     let bestMove = availableMoves[0];
     let bestValue = -1000;
     
