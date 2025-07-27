@@ -271,9 +271,9 @@ export const useGameLogic = () => {
             
             // Check if we should switch to movement phase
             const currentPlayerMoves = newState.moves.filter(m => m.player === prev.currentPlayer).length;
-            if (currentPlayerMoves === prev.gridSize) {
+            if (currentPlayerMoves >= prev.gridSize) {
               const otherPlayerMoves = newState.moves.filter(m => m.player !== prev.currentPlayer).length;
-              if (otherPlayerMoves === prev.gridSize) {
+              if (otherPlayerMoves >= prev.gridSize) {
                 newState.gamePhase = 'movement';
               }
             }
@@ -336,7 +336,7 @@ export const useGameLogic = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [gameState.currentPlayer, gameState.gameMode, gameState.humanPlayer, gameState.winner, gameState.board, gameState.gamePhase, gameState.moves, gameState.nextPieceToMove]);
+  }, [gameState.currentPlayer, gameState.gameMode, gameState.humanPlayer, gameState.winner, gameState.gamePhase, gameState.gridSize]);
 
 
   return {
