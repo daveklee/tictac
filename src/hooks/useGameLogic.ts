@@ -210,7 +210,7 @@ export const useGameLogic = () => {
         // Update next piece to move for this player (cycle 1->2->3->1)
         newState.nextPieceToMove = {
           ...prev.nextPieceToMove,
-          [prev.currentPlayer]: (prev.nextPieceToMove[prev.currentPlayer] % (prev.gridSize + 1)) + 1
+          [prev.currentPlayer]: (prev.nextPieceToMove[prev.currentPlayer] % Math.floor((prev.gridSize * prev.gridSize * 2) / 3 / 2)) + 1
         };
       }
       
@@ -271,7 +271,7 @@ export const useGameLogic = () => {
             newState.moves = [...prev.moves, newMove];
             
             // Check if we should switch to movement phase
-            const piecesPerPlayer = prev.gridSize + 1;
+            const piecesPerPlayer = Math.floor((prev.gridSize * prev.gridSize * 2) / 3 / 2);
             const currentPlayerMoves = newState.moves.filter(m => m.player === prev.currentPlayer).length;
             if (currentPlayerMoves >= piecesPerPlayer) {
               const otherPlayerMoves = newState.moves.filter(m => m.player !== prev.currentPlayer).length;
@@ -313,12 +313,12 @@ export const useGameLogic = () => {
             }
             
             newState.board = newBoard;
-            newState.currentPlayer = prev.currentPlayer === 'X' ? 'O' : 'X';
+          const piecesPerPlayer = Math.floor((prev.gridSize * prev.gridSize * 2) / 3 / 2);
             
             // Update next piece to move for this player (cycle 1->2->3->1)
             newState.nextPieceToMove = {
               ...prev.nextPieceToMove,
-              [prev.currentPlayer]: (prev.nextPieceToMove[prev.currentPlayer] % (prev.gridSize + 1)) + 1
+              [prev.currentPlayer]: (prev.nextPieceToMove[prev.currentPlayer] % Math.floor((prev.gridSize * prev.gridSize * 2) / 3 / 2)) + 1
             };
           }
           
